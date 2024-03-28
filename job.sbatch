@@ -14,7 +14,7 @@ NUM_SNAPS=5
 NUM_BLOCKS=1024  # number of files per snapshot
 
 # This is a good default, but make sure NUM_READERS <= NUM_BLOCKS
-NUM_READERS_PER_NODE=16
+NUM_READERS_PER_NODE=32
 NUM_READERS=$((NUM_READERS_PER_NODE * SLURM_NNODES))
 
 # For rockstar in modules:
@@ -29,7 +29,7 @@ rockstar=/mnt/home/drennehan/local/bin/rockstar_dm_only_gadget4
 
 mkdir -p $OUTBASE
 
-rm -f rockstar.cfg $OUTBASE/auto-rockstar.cfg
+rm -f $OUTBASE/auto-rockstar.cfg
 
 sed \
     -e "s,RUSTY_NUM_WRITERS,$SLURM_NTASKS,g" \
