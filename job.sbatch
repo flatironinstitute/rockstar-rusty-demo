@@ -52,6 +52,7 @@ while [ ! -f $OUTBASE/auto-rockstar.cfg ]; do sleep 1; done
 # use --overlap to have them share CPUs.
 
 srun -n $NUM_READERS --ntasks-per-node=$NUM_READERS_PER_NODE --mpi=none --overlap $rockstar -c $OUTBASE/auto-rockstar.cfg  &  # start readers
+sleep 5
 srun --mpi=none --overlap $rockstar -c $OUTBASE/auto-rockstar.cfg &  # start writers
 
 wait
