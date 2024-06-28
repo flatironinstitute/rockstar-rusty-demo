@@ -3,7 +3,7 @@
 #SBATCH -N 12
 #SBATCH -p scc
 #SBATCH -t 0-2
-#SBATCH -C ib-icelake  # or ib-rome
+#SBATCH -C icelake  # or rome, or genoa
 
 ### Begin user config section ###
 
@@ -22,10 +22,17 @@ NUM_READERS=$((NUM_READERS_PER_NODE * SLURM_NNODES))
 #rockstar=rockstar
 
 # For gadget4 rockstar:
-ml hdf5
+ml modules/2.2 hdf5
 rockstar=/mnt/home/drennehan/local/bin/rockstar_dm_only_gadget4
 
 ### End user config section ###
+
+case $(hostname) in
+    worker5*) ETH=ens1f1 ;;
+    worker6*) ETH=eno1 ;;
+    worker7*) ETH=ens2f1 ;;
+    *) echo "Error: Hostname does not match any known node types." >&2; exit 1 ;;
+esac
 
 mkdir -p $OUTBASE
 
@@ -39,6 +46,7 @@ sed \
     -e "s,RUSTY_NUM_SNAPS,$NUM_SNAPS,g" \
     -e "s,RUSTY_STARTING_SNAP,$STARTING_SNAP,g" \
     -e "s,RUSTY_NUM_BLOCKS,$NUM_BLOCKS,g" \
+    -e "s,RUSTY_ETH,$ETH,g" \
     rockstar.template.cfg > $OUTBASE/rockstar_input.cfg
 
 $rockstar -c $OUTBASE/rockstar_input.cfg &
@@ -51,8 +59,8 @@ while [ ! -f $OUTBASE/auto-rockstar.cfg ]; do sleep 1; done
 # mostly aren't doing work at the same time, so it's okay to
 # use --overlap to have them share CPUs.
 
-srun -n $NUM_READERS --ntasks-per-node=$NUM_READERS_PER_NODE --mpi=none --overlap $rockstar -c $OUTBASE/auto-rockstar.cfg  &  # start readers
+srun -K -n $NUM_READERS --ntasks-per-node=$NUM_READERS_PER_NODE --mpi=none --overlap $rockstar -c $OUTBASE/auto-rockstar.cfg  &  # start readers
 sleep 5
-srun --mpi=none --overlap $rockstar -c $OUTBASE/auto-rockstar.cfg &  # start writers
+srun -K --mpi=none --overlap $rockstar -c $OUTBASE/auto-rockstar.cfg &  # start writers
 
 wait
